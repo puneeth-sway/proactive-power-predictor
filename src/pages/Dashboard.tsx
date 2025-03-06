@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,7 +10,18 @@ import { useState } from "react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [activeNotifications, setActiveNotifications] = useState(mockNotifications.slice(0, 5));
+  const [activeNotifications, setActiveNotifications] = useState(
+    mockNotifications.slice(0, 5).map(notification => ({
+      ...notification,
+      id: notification.id || `fallback-${Math.random().toString(36).substring(2, 9)}`,
+      type: notification.type || "General",
+      title: notification.title || "Notification",
+      message: notification.message || "No details available",
+      createdAt: notification.createdAt || new Date(),
+      read: notification.read || false,
+      recipients: notification.recipients || []
+    }))
+  );
 
   const handleMarkAsRead = (id: string) => {
     setActiveNotifications(prev => 
@@ -25,7 +35,6 @@ const Dashboard = () => {
     setActiveNotifications(prev => prev.filter(notification => notification.id !== id));
   };
 
-  // Count critical/warning products
   const criticalProducts = mockProducts.filter(p => p.status === "Critical");
   const warningProducts = mockProducts.filter(p => p.status === "Warning");
   const upcomingMaintenance = mockProducts.filter(p => p.hoursUntilMaintenance && p.hoursUntilMaintenance < 100);
