@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +14,8 @@ const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  // Find the product with the matching ID
   const product = mockProducts.find(p => p.id === id);
   
-  // If no product is found, display a not found message
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -36,14 +33,11 @@ const ProductDetails = () => {
     );
   }
 
-  // Format the install date for display
   const formattedInstallDate = format(product.installDate, 'MM/dd/yyyy');
-  // Format the last service date for display if it exists
   const formattedLastServiceDate = product.lastServiceDate 
     ? format(product.lastServiceDate, 'MM/dd/yyyy') 
     : 'Not serviced yet';
 
-  // Create a maintenance recommendation object from product data
   const maintenanceRecommendationData = {
     name: product.name,
     lastMaintenance: formattedLastServiceDate,
@@ -51,7 +45,7 @@ const ProductDetails = () => {
       ? format(product.nextMaintenanceDate, 'MM/dd/yyyy')
       : 'Not scheduled',
     status: product.status === 'Critical' ? 'critical' : 
-           product.status === 'Warning' ? 'warning' : 'healthy'
+           product.status === 'Warning' ? 'warning' : 'healthy' as "healthy" | "warning" | "critical"
   };
 
   return (

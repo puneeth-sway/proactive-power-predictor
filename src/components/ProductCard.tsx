@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -6,19 +7,20 @@ import StatusIndicator from "@/components/StatusIndicator";
 import { formatDistanceToNow } from "date-fns";
 import { AlertTriangle, Clock, Activity } from "lucide-react";
 
-interface ProductCardProps {
+export interface ProductCardProps {
   product: Product;
   compact?: boolean;
   className?: string;
+  onClick?: () => void;
 }
 
-export const ProductCard = ({ product, compact = false, className }: ProductCardProps) => {
+export const ProductCard = ({ product, compact = false, className, onClick }: ProductCardProps) => {
   const timeUntilMaintenance = product.nextMaintenanceDate 
     ? formatDistanceToNow(product.nextMaintenanceDate, { addSuffix: true })
     : "Unknown";
   
   return (
-    <Link to={`/product/${product.id}`}>
+    <Link to={`/product/${product.id}`} onClick={onClick}>
       <Card className={cn(
         "transition-all duration-300 h-full hover:shadow-md",
         product.status === "Critical" && "border-destructive/40",
