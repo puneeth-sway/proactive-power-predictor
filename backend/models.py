@@ -24,6 +24,12 @@ class HealthStatus(str, Enum):
     CRITICAL = "Critical"
     NEUTRAL = "Neutral"
 
+class NotificationType(str, Enum):
+    MAINTENANCE_DUE = "Maintenance Due"
+    CRITICAL_ALERT = "Critical Alert"
+    WARNING = "Warning"
+    GENERAL = "General"
+
 # Data classes
 @dataclass
 class MaintenanceRecord:
@@ -47,6 +53,37 @@ class MaintenanceRecommendation:
     timeInterval: Optional[int] = None  # in months
 
 @dataclass
+class Person:
+    id: str
+    name: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    role: Optional[str] = None  # 'homeowner', 'installer', 'contractor'
+
+@dataclass
+class Contractor:
+    id: str
+    name: str
+    email: str
+    phone: str
+    company: str
+    installers: List[str]  # List of installer IDs managed by this contractor
+    homeowners: List[str]  # List of homeowner IDs managed by this contractor
+
+@dataclass
+class Notification:
+    id: str
+    type: str
+    title: str
+    message: str
+    recipients: List[str]  # List of person IDs
+    productId: Optional[str] = None
+    createdAt: datetime = datetime.now()
+    read: bool = False
+    scheduledFor: Optional[datetime] = None
+
+@dataclass
 class Product:
     id: str
     serialNumber: str
@@ -61,6 +98,7 @@ class Product:
     installer: Dict[str, Any]
     location: Dict[str, Any]
     weeklyUsage: List[int]
+    contractorId: Optional[str] = None  # ID of the contractor managing this product
     lastServiceDate: Optional[datetime] = None
     maintenanceHistory: Optional[List[MaintenanceRecord]] = None
     nextMaintenanceDate: Optional[datetime] = None

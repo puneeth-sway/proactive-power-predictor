@@ -4,7 +4,8 @@ from flask_cors import CORS
 import json
 from datetime import datetime, timedelta
 import random
-from models import Product, MaintenanceRecord, MaintenanceRecommendation, ProductType, MaintenanceType, HealthStatus
+import uuid
+from models import Product, MaintenanceRecord, MaintenanceRecommendation, ProductType, MaintenanceType, HealthStatus, Contractor, Notification, NotificationType
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -17,19 +18,33 @@ def load_data():
         
         with open('data/maintenance_recommendations.json', 'r') as f:
             recommendations_data = json.load(f)
+        
+        with open('data/contractors.json', 'r') as f:
+            contractors_data = json.load(f)
+        
+        with open('data/notifications.json', 'r') as f:
+            notifications_data = json.load(f)
             
-        return products_data, recommendations_data
+        return products_data, recommendations_data, contractors_data, notifications_data
     except FileNotFoundError:
         # If files don't exist, create sample data
-        return [], []
+        return [], [], [], []
 
 # Save data to JSON files
-def save_data(products, recommendations):
+def save_data(products, recommendations, contractors=None, notifications=None):
     with open('data/products.json', 'w') as f:
         json.dump(products, f, default=str, indent=2)
     
     with open('data/maintenance_recommendations.json', 'w') as f:
         json.dump(recommendations, f, default=str, indent=2)
+    
+    if contractors is not None:
+        with open('data/contractors.json', 'w') as f:
+            json.dump(contractors, f, default=str, indent=2)
+    
+    if notifications is not None:
+        with open('data/notifications.json', 'w') as f:
+            json.dump(notifications, f, default=str, indent=2)
 
 # Convert datetime strings to Python datetime objects
 def parse_dates(product):
@@ -52,12 +67,12 @@ def parse_dates(product):
 # Routes
 @app.route('/api/products', methods=['GET'])
 def get_products():
-    products, _ = load_data()
+    products, _, _, _ = load_data()
     return jsonify(products)
 
 @app.route('/api/products/<product_id>', methods=['GET'])
 def get_product(product_id):
-    products, _ = load_data()
+    products, _, _, _ = load_data()
     product = next((p for p in products if p['id'] == product_id), None)
     
     if product:
@@ -67,7 +82,7 @@ def get_product(product_id):
 
 @app.route('/api/products/<product_id>/recommendations', methods=['GET'])
 def get_recommendations(product_id):
-    products, recommendations = load_data()
+    products, recommendations, _, _ = load_data()
     product = next((p for p in products if p['id'] == product_id), None)
     
     if not product:
@@ -81,7 +96,7 @@ def get_recommendations(product_id):
 @app.route('/api/predict/<product_id>', methods=['GET'])
 def predict_maintenance(product_id):
     """Predict maintenance needs based on product data"""
-    products, recommendations = load_data()
+    products, recommendations, _, _ = load_data()
     product = next((p for p in products if p['id'] == product_id), None)
     
     if not product:
@@ -98,6 +113,82 @@ def predict_maintenance(product_id):
     predictions = calculate_predictions(product, product_recommendations)
     
     return jsonify(predictions)
+
+# Contractor routes
+@app.route('/api/contractors', methods=['GET'])
+def get_contractors():
+    _, _, contractors, _ = load_data()
+    return jsonify(contractors)
+
+@app.route('/api/contractors/<contractor_id>', methods=['GET'])
+def get_contractor(contractor_id):
+    _, _, contractors, _ = load_data()
+    contractor = next((c for c in contractors if c['id'] == contractor_id), None)
+    
+    if contractor:
+        return jsonify(contractor)
+    else:
+        return jsonify({"error": "Contractor not found"}), 404
+
+@app.route('/api/contractors/<contractor_id>/products', methods=['GET'])
+def get_contractor_products(contractor_id):
+    products, _, contractors, _ = load_data()
+    contractor = next((c for c in contractors if c['id'] == contractor_id), None)
+    
+    if not contractor:
+        return jsonify({"error": "Contractor not found"}), 404
+    
+    contractor_products = [p for p in products if p.get('contractorId') == contractor_id]
+    return jsonify(contractor_products)
+
+@app.route('/api/contractors/<contractor_id>/send-notification', methods=['POST'])
+def send_notification(contractor_id):
+    products, _, contractors, notifications = load_data()
+    data = request.get_json()
+    
+    if not data or 'type' not in data or 'title' not in data or 'message' not in data or 'recipientType' not in data:
+        return jsonify({"error": "Invalid notification data"}), 400
+    
+    contractor = next((c for c in contractors if c['id'] == contractor_id), None)
+    if not contractor:
+        return jsonify({"error": "Contractor not found"}), 404
+    
+    recipient_type = data['recipientType']  # 'homeowners', 'installers', or 'both'
+    recipients = []
+    
+    if recipient_type in ['homeowners', 'both']:
+        recipients.extend(contractor['homeowners'])
+    
+    if recipient_type in ['installers', 'both']:
+        recipients.extend(contractor['installers'])
+    
+    notification = {
+        'id': f'notif-{uuid.uuid4()}',
+        'type': data['type'],
+        'title': data['title'],
+        'message': data['message'],
+        'recipients': recipients,
+        'productId': data.get('productId'),
+        'createdAt': datetime.now().isoformat(),
+        'read': False,
+        'scheduledFor': data.get('scheduledFor')
+    }
+    
+    notifications.append(notification)
+    save_data(products, [], contractors, notifications)
+    
+    return jsonify({"message": "Notification sent successfully", "notification": notification})
+
+@app.route('/api/notifications', methods=['GET'])
+def get_notifications():
+    _, _, _, notifications = load_data()
+    recipient_id = request.args.get('recipientId')
+    
+    if recipient_id:
+        filtered_notifications = [n for n in notifications if recipient_id in n['recipients']]
+        return jsonify(filtered_notifications)
+    
+    return jsonify(notifications)
 
 def calculate_predictions(product, recommendations):
     """
@@ -192,10 +283,15 @@ def initialize_data():
     """Initialize the database with sample data from the frontend"""
     data = request.get_json()
     
-    if not data or 'products' not in data or 'recommendations' not in data:
+    if not data:
         return jsonify({"error": "Invalid data format"}), 400
     
-    save_data(data['products'], data['recommendations'])
+    products = data.get('products', [])
+    recommendations = data.get('recommendations', [])
+    contractors = data.get('contractors', [])
+    notifications = data.get('notifications', [])
+    
+    save_data(products, recommendations, contractors, notifications)
     
     return jsonify({"message": "Data initialized successfully"})
 

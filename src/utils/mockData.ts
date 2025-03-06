@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 // Product types
@@ -25,6 +24,42 @@ export enum HealthStatus {
   Critical = "Critical",
   Neutral = "Neutral"
 }
+
+// Notification types
+export enum NotificationType {
+  MAINTENANCE_DUE = "Maintenance Due",
+  CRITICAL_ALERT = "Critical Alert",
+  WARNING = "Warning",
+  GENERAL = "General"
+}
+
+// Notification schema
+export const NotificationSchema = z.object({
+  id: z.string(),
+  type: z.nativeEnum(NotificationType),
+  title: z.string(),
+  message: z.string(),
+  recipients: z.array(z.string()),
+  productId: z.string().optional(),
+  createdAt: z.date(),
+  read: z.boolean(),
+  scheduledFor: z.date().optional()
+});
+
+export type Notification = z.infer<typeof NotificationSchema>;
+
+// Contractor schema
+export const ContractorSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email(),
+  phone: z.string(),
+  company: z.string(),
+  installers: z.array(z.string()),
+  homeowners: z.array(z.string())
+});
+
+export type Contractor = z.infer<typeof ContractorSchema>;
 
 // Maintenance record schema
 export const MaintenanceRecordSchema = z.object({
@@ -507,3 +542,71 @@ export const generateAlertMessage = (product: Product): string | null => {
       return null;
   }
 };
+
+// Generate mock notifications
+export const generateMockNotifications = (count: number): Notification[] => {
+  const notifications: Notification[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    const notificationTypes = Object.values(NotificationType);
+    const type = notificationTypes[Math.floor(Math.random() * notificationTypes.length)];
+    
+    let title = "";
+    let message = "";
+    
+    switch (type) {
+      case NotificationType.MAINTENANCE_DUE:
+        title = "Scheduled Maintenance Due";
+        message = `Maintenance is due for your ${["generator", "pressure washer", "pump"][i % 3]} in the next 30 days. Please schedule service.`;
+        break;
+      case NotificationType.CRITICAL_ALERT:
+        title = "Critical System Alert";
+        message = "Your system has reported critical issues that require immediate attention. Please contact service.";
+        break;
+      case NotificationType.WARNING:
+        title = "System Warning";
+        message = "Your system has reported unusual behavior. Consider scheduling a check-up.";
+        break;
+      default:
+        title = "System Update";
+        message = "Your system has received a software update with improved features.";
+    }
+    
+    notifications.push({
+      id: `notif-${i + 1}`,
+      type,
+      title,
+      message,
+      recipients: [`homeowner-${(i % 5) + 1}`],
+      productId: `prod-${(i % 10) + 1}`,
+      createdAt: getRandomDateInPast(i * 2),
+      read: i > (count / 2),
+      scheduledFor: i % 3 === 0 ? new Date(new Date().setDate(new Date().getDate() + i)) : undefined
+    });
+  }
+  
+  return notifications;
+};
+
+// Generate mock contractors
+export const generateMockContractors = (count: number): Contractor[] => {
+  const contractors: Contractor[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    contractors.push({
+      id: `contractor-${i + 1}`,
+      name: `Contractor Company ${i + 1}`,
+      email: `contact@contractor${i + 1}.com`,
+      phone: `(555) ${100 + i}-${2000 + i}`,
+      company: `Power Maintenance Solutions ${i + 1}`,
+      installers: Array.from({ length: 3 }, (_, j) => `installer-${j + 1 + (i * 3)}`),
+      homeowners: Array.from({ length: 5 }, (_, j) => `owner-${j + 1 + (i * 5)}`)
+    });
+  }
+  
+  return contractors;
+};
+
+// Generate mock data
+export const mockNotifications = generateMockNotifications(10);
+export const mockContractors = generateMockContractors(3);
