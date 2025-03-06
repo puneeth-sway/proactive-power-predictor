@@ -9,6 +9,9 @@ import Dashboard from "./pages/Dashboard";
 import ProductDetails from "./pages/ProductDetails";
 import NotFound from "./pages/NotFound";
 import ContractorDashboard from "./pages/ContractorDashboard";
+import InstallerDashboard from "./pages/InstallerDashboard";
+import UserSelection from "./pages/UserSelection";
+import RoleBasedRoute from "./components/RoleBasedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,10 +29,23 @@ const App = () => (
       <Sonner position="top-right" />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<UserSelection />} />
+          <Route path="/dashboard" element={
+            <RoleBasedRoute allowedRoles={['homeowner', 'contractor']}>
+              <Dashboard />
+            </RoleBasedRoute>
+          } />
           <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/contractor" element={<ContractorDashboard />} />
+          <Route path="/contractor" element={
+            <RoleBasedRoute allowedRoles={['contractor']}>
+              <ContractorDashboard />
+            </RoleBasedRoute>
+          } />
+          <Route path="/installer" element={
+            <RoleBasedRoute allowedRoles={['installer']}>
+              <InstallerDashboard />
+            </RoleBasedRoute>
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

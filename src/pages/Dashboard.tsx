@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpRight, Bell, Info, Users, ArrowRight } from "lucide-react";
+import { ArrowUpRight, Bell, Info, Users, ArrowRight, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import NotificationsList from "@/components/NotificationsList";
 import { mockProducts, mockNotifications, generateAlertMessage } from "@/utils/mockData";
 import { useState } from "react";
+import UserRoleBadge from "@/components/UserRoleBadge";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -42,11 +43,23 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container px-4 py-8 mx-auto">
-        <div className="mb-8 space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">System Dashboard</h1>
-          <p className="text-muted-foreground">
-            Monitor your equipment performance and upcoming maintenance.
-          </p>
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight">Homeowner Dashboard</h1>
+              <UserRoleBadge className="ml-2" />
+            </div>
+            <p className="text-muted-foreground">
+              Monitor your equipment performance and upcoming maintenance.
+            </p>
+          </div>
         </div>
 
         <div className="mb-6">
@@ -57,6 +70,15 @@ const Dashboard = () => {
           >
             <Users className="mr-2 h-4 w-4" />
             Contractor Dashboard
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+          <Button 
+            variant="outline"
+            className="border-dashed ml-2"
+            onClick={() => navigate('/installer')}
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Installer Dashboard
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

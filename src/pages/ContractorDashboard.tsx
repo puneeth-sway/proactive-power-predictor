@@ -1,404 +1,259 @@
-
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import ProductCard from "@/components/ProductCard";
-import { CalendarIcon, Check, Send, Users, AlertTriangle, Bell } from "lucide-react";
-import { mockProducts, NotificationType } from "@/utils/mockData";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-
-type Contractor = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  installers: string[];
-  homeowners: string[];
-};
-
-// Mockup contractor data (in a real app, this would come from the API)
-const mockContractor: Contractor = {
-  id: "contractor-1",
-  name: "Alpha Maintenance Services",
-  email: "contact@alphamaintenance.com",
-  phone: "(555) 123-4567",
-  company: "Alpha Maintenance Inc.",
-  installers: ["installer-1", "installer-2", "installer-3"],
-  homeowners: mockProducts.map(p => p.owner.id)
-};
+import { mockProducts, mockNotifications } from "@/utils/mockData";
+import { useState } from "react";
+import { ArrowLeft, Users, Home, Wrench, Bell, Send } from "lucide-react";
+import NotificationsList from "@/components/NotificationsList";
+import UserRoleBadge from "@/components/UserRoleBadge";
 
 const ContractorDashboard = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [notificationType, setNotificationType] = useState<string>(NotificationType.GENERAL);
-  const [notificationTitle, setNotificationTitle] = useState("");
-  const [notificationMessage, setNotificationMessage] = useState("");
-  const [recipientType, setRecipientType] = useState("both");
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const handleSelectProduct = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId) 
-        : [...prev, productId]
-    );
-  };
-
-  const handleSendNotification = () => {
-    if (!notificationTitle || !notificationMessage) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please provide both a title and message for the notification.",
-      });
-      return;
-    }
-
-    // In a real app, this would call the API
-    const productText = selectedProducts.length > 0 
-      ? `for ${selectedProducts.length} selected products` 
-      : "to all recipients";
-    
-    toast({
-      title: "Notification Sent",
-      description: `Your notification has been sent ${productText}`,
-    });
-
-    // Reset form
-    setNotificationTitle("");
-    setNotificationMessage("");
-    setSelectedProducts([]);
-    setDate(undefined);
-    setDialogOpen(false);
-  };
-
-  // Filter products by installer or homeowner
-  const productsByInstaller = mockProducts.reduce((acc, product) => {
-    const installerId = product.installer.id;
-    if (!acc[installerId]) {
-      acc[installerId] = [];
-    }
-    acc[installerId].push(product);
-    return acc;
-  }, {} as Record<string, typeof mockProducts>);
-
+  const [activeNotifications, setActiveNotifications] = useState(
+    mockNotifications.slice(0, 5).map(notification => ({
+      ...notification,
+      id: notification.id || `fallback-${Math.random().toString(36).substring(2, 9)}`,
+      type: notification.type || "General",
+      title: notification.title || "Notification",
+      message: notification.message || "No details available",
+      createdAt: notification.createdAt || new Date(),
+      read: notification.read || false,
+      recipients: notification.recipients || []
+    }))
+  );
+  
   return (
     <div className="min-h-screen bg-background">
       <div className="container px-4 py-8 mx-auto">
-        <div className="mb-8 space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Contractor Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage products and send notifications to homeowners and installers.
-          </p>
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight">Contractor Dashboard</h1>
+              <UserRoleBadge className="ml-2" />
+            </div>
+            <p className="text-muted-foreground">
+              Manage your team of installers and homeowner clients
+            </p>
+          </div>
         </div>
-
-        <div className="flex flex-col lg:flex-row gap-6 mb-6">
-          <Card className="flex-1">
-            <CardHeader>
-              <CardTitle>Contractor Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm text-muted-foreground">Company:</span>
-                  <p className="font-medium">{mockContractor.company}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-muted-foreground">Contact:</span>
-                  <p className="font-medium">{mockContractor.name}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-muted-foreground">Email:</span>
-                  <p className="font-medium">{mockContractor.email}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-muted-foreground">Phone:</span>
-                  <p className="font-medium">{mockContractor.phone}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="flex-1">
-            <CardHeader>
-              <CardTitle>Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <span className="text-sm text-muted-foreground">Total Products</span>
-                  <p className="text-2xl font-bold">{mockProducts.length}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-sm text-muted-foreground">Installers</span>
-                  <p className="text-2xl font-bold">{mockContractor.installers.length}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-sm text-muted-foreground">Homeowners</span>
-                  <p className="text-2xl font-bold">{mockContractor.homeowners.length}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-sm text-muted-foreground">Critical Issues</span>
-                  <p className="text-2xl font-bold text-destructive">
-                    {mockProducts.filter(p => p.status === "Critical").length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Managed Products</h2>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Bell className="mr-2 h-4 w-4" />
-                Send Notification
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
-              <DialogHeader>
-                <DialogTitle>Send Notification</DialogTitle>
-                <DialogDescription>
-                  Send notifications to homeowners and installers.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="recipient-type">Recipients</Label>
-                  <Select value={recipientType} onValueChange={setRecipientType}>
-                    <SelectTrigger id="recipient-type">
-                      <SelectValue placeholder="Select recipients" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="homeowners">Homeowners only</SelectItem>
-                      <SelectItem value="installers">Installers only</SelectItem>
-                      <SelectItem value="both">Both homeowners and installers</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="notification-type">Notification Type</Label>
-                  <Select value={notificationType} onValueChange={setNotificationType}>
-                    <SelectTrigger id="notification-type">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NotificationType.MAINTENANCE_DUE}>Maintenance Due</SelectItem>
-                      <SelectItem value={NotificationType.CRITICAL_ALERT}>Critical Alert</SelectItem>
-                      <SelectItem value={NotificationType.WARNING}>Warning</SelectItem>
-                      <SelectItem value={NotificationType.GENERAL}>General</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={notificationTitle}
-                    onChange={(e) => setNotificationTitle(e.target.value)}
-                    placeholder="Notification title"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
-                    id="message"
-                    value={notificationMessage}
-                    onChange={(e) => setNotificationMessage(e.target.value)}
-                    placeholder="Enter your notification message here"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Schedule for later (optional)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : "Schedule date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div>
-                  <Label className="mb-2 block">
-                    Selected Products ({selectedProducts.length})
-                  </Label>
-                  <div className="text-sm text-muted-foreground">
-                    {selectedProducts.length > 0 ? (
-                      <span>Notifications will be sent to the owners and installers of the selected products.</span>
-                    ) : (
-                      <span>Notifications will be sent to all recipients. Select specific products if needed.</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" onClick={handleSendNotification}>
-                  <Send className="mr-2 h-4 w-4" />
-                  Send Notification
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all">All Products</TabsTrigger>
-            <TabsTrigger value="critical">Critical Issues</TabsTrigger>
-            <TabsTrigger value="by-installer">By Installer</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {mockProducts.map((product) => (
-                <div key={product.id} className="relative">
-                  <div className="absolute top-2 right-2 z-10">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "h-8 w-8 rounded-full",
-                        selectedProducts.includes(product.id) && "bg-primary text-primary-foreground"
-                      )}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSelectProduct(product.id);
-                      }}
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onClick={() => navigate(`/product/${product.id}`)}
-                  />
-                </div>
+        
+        <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 mb-6">
+          <div className="space-y-6 md:col-span-2 lg:col-span-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {[
+                { 
+                  title: "Total Systems", 
+                  value: mockProducts.length, 
+                  description: "Across all clients", 
+                  icon: <Home className="h-4 w-4" /> 
+                },
+                { 
+                  title: "Homeowner Clients", 
+                  value: 18, 
+                  description: "Active customers",
+                  icon: <Users className="h-4 w-4" /> 
+                },
+                { 
+                  title: "Installer Team", 
+                  value: 6, 
+                  description: "Field technicians",
+                  icon: <Wrench className="h-4 w-4" /> 
+                },
+                { 
+                  title: "Active Alerts", 
+                  value: 12, 
+                  description: "Requiring attention",
+                  className: "border-amber-200 bg-amber-50 dark:bg-amber-950", 
+                  icon: <Bell className="h-4 w-4" /> 
+                },
+              ].map((item, i) => (
+                <Card key={i} className={item.className}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      {item.icon}
+                      {item.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {item.value}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {item.description}
+                    </p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </TabsContent>
 
-          <TabsContent value="critical">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {mockProducts
-                .filter(p => p.status === "Critical")
-                .map((product) => (
-                  <div key={product.id} className="relative">
-                    <div className="absolute top-2 right-2 z-10">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "h-8 w-8 rounded-full",
-                          selectedProducts.includes(product.id) && "bg-primary text-primary-foreground"
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectProduct(product.id);
-                        }}
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onClick={() => navigate(`/product/${product.id}`)}
-                    />
-                  </div>
-                ))}
-            </div>
-          </TabsContent>
+            <Tabs defaultValue="team" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <TabsList>
+                  <TabsTrigger value="team">Team</TabsTrigger>
+                  <TabsTrigger value="clients">Clients</TabsTrigger>
+                  <TabsTrigger value="alerts">Alerts</TabsTrigger>
+                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                </TabsList>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">
+                    <Send className="size-4 mr-2" />
+                    Send Notifications
+                  </Button>
+                </div>
+              </div>
 
-          <TabsContent value="by-installer">
-            <div className="space-y-8">
-              {Object.entries(productsByInstaller).map(([installerId, products]) => {
-                const installer = products[0]?.installer;
-                return (
-                  <div key={installerId} className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold">{installer.name}</h3>
-                      <span className="text-sm text-muted-foreground">
-                        ({products.length} products)
-                      </span>
-                    </div>
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {products.map((product) => (
-                        <div key={product.id} className="relative">
-                          <div className="absolute top-2 right-2 z-10">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className={cn(
-                                "h-8 w-8 rounded-full",
-                                selectedProducts.includes(product.id) && "bg-primary text-primary-foreground"
-                              )}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleSelectProduct(product.id);
-                              }}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
+              <TabsContent value="team" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Installer Team</CardTitle>
+                    <CardDescription>
+                      Manage your team of field technicians
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {[
+                        { name: "John Smith", email: "john@example.com", phone: "555-123-4567", activeJobs: 3 },
+                        { name: "Sarah Johnson", email: "sarah@example.com", phone: "555-987-6543", activeJobs: 2 },
+                        { name: "Michael Brown", email: "michael@example.com", phone: "555-456-7890", activeJobs: 5 },
+                        { name: "Jessica Williams", email: "jessica@example.com", phone: "555-789-0123", activeJobs: 1 },
+                      ].map((installer, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div>
+                            <h3 className="font-medium">{installer.name}</h3>
+                            <p className="text-sm text-muted-foreground">{installer.email} • {installer.phone}</p>
                           </div>
-                          <ProductCard
-                            key={product.id}
-                            product={product}
-                            compact
-                            onClick={() => navigate(`/product/${product.id}`)}
-                          />
+                          <div className="flex items-center gap-4">
+                            <div className="text-sm">
+                              <span className={`${installer.activeJobs > 3 ? "text-amber-600" : ""}`}>
+                                {installer.activeJobs} active jobs
+                              </span>
+                            </div>
+                            <Button size="sm">View Details</Button>
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </TabsContent>
-        </Tabs>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="clients" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Homeowner Clients</CardTitle>
+                    <CardDescription>
+                      Manage your customer relationships
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {[
+                        { name: "David Wilson", email: "david@example.com", phone: "555-222-3333", systems: 2, location: "Los Angeles, CA" },
+                        { name: "Emily Davis", email: "emily@example.com", phone: "555-444-5555", systems: 1, location: "San Francisco, CA" },
+                        { name: "Robert Taylor", email: "robert@example.com", phone: "555-666-7777", systems: 3, location: "San Diego, CA" },
+                        { name: "Jennifer Martinez", email: "jennifer@example.com", phone: "555-888-9999", systems: 1, location: "Sacramento, CA" },
+                      ].map((client, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div>
+                            <h3 className="font-medium">{client.name}</h3>
+                            <p className="text-sm text-muted-foreground">{client.location}</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <span className="text-sm">{client.systems} systems</span>
+                              <p className="text-xs text-muted-foreground">{client.email}</p>
+                            </div>
+                            <Button size="sm">View Details</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="alerts" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>System Alerts</CardTitle>
+                    <CardDescription>
+                      Recent notifications and warnings
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Example alerts - replace with actual data */}
+                      {[
+                        { message: "Generator #1234 - Low oil pressure", severity: "critical" },
+                        { message: "System #5678 - Approaching maintenance", severity: "warning" },
+                      ].map((alert, i) => (
+                        <div key={i} className={`p-4 border rounded-lg ${alert.severity === "critical" ? "bg-red-50 border-red-200 dark:bg-red-950" : "bg-amber-50 border-amber-200 dark:bg-amber-950"}`}>
+                          <p className="text-sm">{alert.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="schedule" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Team Schedule</CardTitle>
+                    <CardDescription>
+                      View scheduled tasks for your team
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Example schedule items - replace with actual data */}
+                      {[
+                        { task: "Install Generator #9101", installer: "John Smith", time: "9:00 AM" },
+                        { task: "Maintenance System #2345", installer: "Sarah Johnson", time: "1:00 PM" },
+                      ].map((schedule, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div>
+                            <h3 className="font-medium">{schedule.task}</h3>
+                            <p className="text-sm text-muted-foreground">Installer: {schedule.installer}</p>
+                          </div>
+                          <div>
+                            <span className="text-sm">{schedule.time}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="md:col-span-1">
+            <NotificationsList 
+              notifications={mockNotifications.slice(0, 5).map(notification => ({
+                ...notification,
+                id: notification.id || `fallback-${Math.random().toString(36).substring(2, 9)}`,
+                type: notification.type || "General",
+                title: notification.title || "Notification",
+                message: notification.message || "No details available",
+                createdAt: new Date(),
+                read: notification.read || false,
+                recipients: notification.recipients || []
+              }))}
+              onMarkAsRead={(id) => console.log("Mark as read:", id)}
+              onDismiss={(id) => console.log("Dismiss:", id)}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
