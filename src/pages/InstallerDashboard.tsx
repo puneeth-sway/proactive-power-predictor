@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpRight, Tool, Calendar, Clock, Home, ArrowLeft } from "lucide-react";
+import { ArrowUpRight, Wrench, Calendar, Clock, Home, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { mockProducts, mockNotifications } from "@/utils/mockData";
 import NotificationsList from "@/components/NotificationsList";
@@ -99,7 +98,7 @@ const InstallerDashboard = () => {
                   value: maintenanceTasks.length, 
                   description: "Requiring attention soon",
                   className: "border-amber-200 bg-amber-50 dark:bg-amber-950", 
-                  icon: <Tool className="h-4 w-4" /> 
+                  icon: <Wrench className="h-4 w-4" /> 
                 },
                 { 
                   title: "Hours This Month", 
