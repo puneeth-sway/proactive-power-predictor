@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -13,7 +12,7 @@ interface ProductCardProps {
   className?: string;
 }
 
-const ProductCard = ({ product, compact = false, className }: ProductCardProps) => {
+export const ProductCard = ({ product, compact = false, className }: ProductCardProps) => {
   const timeUntilMaintenance = product.nextMaintenanceDate 
     ? formatDistanceToNow(product.nextMaintenanceDate, { addSuffix: true })
     : "Unknown";

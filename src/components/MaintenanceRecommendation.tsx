@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -64,3 +65,5 @@ export const MaintenanceRecommendation = ({
     </Card>
   );
 };
+
+export default MaintenanceRecommendation;

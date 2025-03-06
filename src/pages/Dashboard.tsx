@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpRight, Bell, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ProductCard } from "@/components/ProductCard";
+import ProductCard from "@/components/ProductCard";
 import { mockProducts } from "@/utils/mockData";
 
 const Dashboard = () => {

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   AreaChart,
@@ -29,7 +28,7 @@ interface PerformanceChartProps {
   className?: string;
 }
 
-const PerformanceChart = ({ product, className }: PerformanceChartProps) => {
+export const PerformanceChart = ({ product, className }: PerformanceChartProps) => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   
   useEffect(() => {

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -16,7 +15,7 @@ interface MaintenanceTimelineProps {
   className?: string;
 }
 
-const MaintenanceTimeline = ({ product, className }: MaintenanceTimelineProps) => {
+export const MaintenanceTimeline = ({ product, className }: MaintenanceTimelineProps) => {
   // Sort maintenance history by date (most recent first)
   const sortedHistory = [...(product.maintenanceHistory || [])]
     .sort((a, b) => {

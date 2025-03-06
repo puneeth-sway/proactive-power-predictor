@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, DownloadCloud, Share2 } from "lucide-react";
-import { StatusIndicator } from "@/components/StatusIndicator";
-import { PerformanceChart } from "@/components/PerformanceChart";
-import { MaintenanceTimeline } from "@/components/MaintenanceTimeline";
+import StatusIndicator from "@/components/StatusIndicator";
+import PerformanceChart from "@/components/PerformanceChart";
+import MaintenanceTimeline from "@/components/MaintenanceTimeline";
 import { MaintenanceRecommendation } from "@/components/MaintenanceRecommendation";
 import { mockProducts } from "@/utils/mockData";
+import { format } from "date-fns";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,24 @@ const ProductDetails = () => {
     );
   }
 
+  // Format the install date for display
+  const formattedInstallDate = format(product.installDate, 'MM/dd/yyyy');
+  // Format the last service date for display if it exists
+  const formattedLastServiceDate = product.lastServiceDate 
+    ? format(product.lastServiceDate, 'MM/dd/yyyy') 
+    : 'Not serviced yet';
+
+  // Create a maintenance recommendation object from product data
+  const maintenanceRecommendationData = {
+    name: product.name,
+    lastMaintenance: formattedLastServiceDate,
+    recommendedMaintenance: product.nextMaintenanceDate 
+      ? format(product.nextMaintenanceDate, 'MM/dd/yyyy')
+      : 'Not scheduled',
+    status: product.status === 'Critical' ? 'critical' : 
+           product.status === 'Warning' ? 'warning' : 'healthy'
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container px-4 py-8 mx-auto">
@@ -56,7 +75,7 @@ const ProductDetails = () => {
                 Serial: {product.serialNumber}
               </span>
               <span className="text-sm text-muted-foreground">
-                Installed: {product.installDate}
+                Installed: {formattedInstallDate}
               </span>
             </div>
           </div>
@@ -99,11 +118,11 @@ const ProductDetails = () => {
                       </div>
                       <div>
                         <h4 className="text-sm font-medium text-muted-foreground">Hours Run</h4>
-                        <p>{product.hoursRun} hours</p>
+                        <p>{product.totalHoursRun} hours</p>
                       </div>
                       <div>
                         <h4 className="text-sm font-medium text-muted-foreground">Last Maintenance</h4>
-                        <p>{product.lastMaintenance}</p>
+                        <p>{formattedLastServiceDate}</p>
                       </div>
                     </div>
                   </div>
@@ -116,7 +135,7 @@ const ProductDetails = () => {
                   <CardDescription>System efficiency and metrics</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PerformanceChart data={product.performanceData} />
+                  <PerformanceChart product={product} />
                 </CardContent>
               </Card>
             </div>
@@ -139,7 +158,7 @@ const ProductDetails = () => {
                 <CardDescription>System performance over time</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <PerformanceChart data={product.performanceData} showDetails />
+                <PerformanceChart product={product} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -152,7 +171,7 @@ const ProductDetails = () => {
                   <CardDescription>Suggested upcoming maintenance</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <MaintenanceRecommendation product={product} />
+                  <MaintenanceRecommendation product={maintenanceRecommendationData} />
                 </CardContent>
               </Card>
               
@@ -163,11 +182,13 @@ const ProductDetails = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {product.maintenanceHistory.map((record, index) => (
+                    {product.maintenanceHistory && product.maintenanceHistory.map((record, index) => (
                       <div key={index} className="border-b pb-4 last:border-0 last:pb-0">
                         <div className="flex justify-between">
-                          <h4 className="font-medium">{record.type}</h4>
-                          <span className="text-sm text-muted-foreground">{record.date}</span>
+                          <h4 className="font-medium">{record.description}</h4>
+                          <span className="text-sm text-muted-foreground">
+                            {record.datePerformed ? format(record.datePerformed, 'MM/dd/yyyy') : 'Unknown date'}
+                          </span>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">{record.notes}</p>
                       </div>

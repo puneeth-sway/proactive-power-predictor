@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { CheckCircle, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import { HealthStatus } from "@/utils/mockData";
@@ -10,7 +9,7 @@ interface StatusIndicatorProps {
   className?: string;
 }
 
-const StatusIndicator = ({ 
+export const StatusIndicator = ({ 
   status, 
   size = "md", 
   showLabel = true, 
