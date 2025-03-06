@@ -11,7 +11,7 @@ export interface ProductCardProps {
   product: Product;
   compact?: boolean;
   className?: string;
-  onClick?: () => void;
+  onClick?: () => void; // Added onClick prop
 }
 
 export const ProductCard = ({ product, compact = false, className, onClick }: ProductCardProps) => {

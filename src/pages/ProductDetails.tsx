@@ -1,3 +1,4 @@
+
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import StatusIndicator from "@/components/StatusIndicator";
 import PerformanceChart from "@/components/PerformanceChart";
 import MaintenanceTimeline from "@/components/MaintenanceTimeline";
 import { MaintenanceRecommendation } from "@/components/MaintenanceRecommendation";
-import { mockProducts } from "@/utils/mockData";
+import { mockProducts, HealthStatus } from "@/utils/mockData";
 import { format } from "date-fns";
 
 const ProductDetails = () => {
@@ -38,14 +39,15 @@ const ProductDetails = () => {
     ? format(product.lastServiceDate, 'MM/dd/yyyy') 
     : 'Not serviced yet';
 
+  // Updated to use the proper type for status
   const maintenanceRecommendationData = {
     name: product.name,
     lastMaintenance: formattedLastServiceDate,
     recommendedMaintenance: product.nextMaintenanceDate 
       ? format(product.nextMaintenanceDate, 'MM/dd/yyyy')
       : 'Not scheduled',
-    status: product.status === 'Critical' ? 'critical' : 
-           product.status === 'Warning' ? 'warning' : 'healthy' as "healthy" | "warning" | "critical"
+    status: product.status === HealthStatus.Critical ? 'critical' : 
+           product.status === HealthStatus.Warning ? 'warning' : 'healthy' as "healthy" | "warning" | "critical"
   };
 
   return (
