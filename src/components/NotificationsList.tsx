@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { Bell, AlertTriangle, Calendar, Info, CheckCircle, X } from "lucide-reac
 import { NotificationType } from "@/utils/mockData";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 export interface Notification {
   id: string;
@@ -17,7 +19,7 @@ export interface Notification {
   createdAt: Date;
   read: boolean;
   scheduledFor?: Date;
-  recipients: string[]; // Adding this required field to match backend model
+  recipients: string[];
 }
 
 interface NotificationsListProps {
@@ -35,6 +37,24 @@ const NotificationsList = ({
   maxHeight = "350px",
   showEmpty = true,
 }: NotificationsListProps) => {
+  const handleMarkAsRead = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onMarkAsRead) {
+      onMarkAsRead(id);
+      toast.success("Notification marked as read");
+    }
+  };
+
+  const handleDismiss = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDismiss) {
+      onDismiss(id);
+      toast.success("Notification dismissed");
+    }
+  };
+
   if (notifications.length === 0 && showEmpty) {
     return (
       <Card>
@@ -127,7 +147,8 @@ const NotificationsList = ({
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => onDismiss(notification.id)}
+                          onClick={(e) => handleDismiss(notification.id, e)}
+                          aria-label="Dismiss notification"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -139,7 +160,7 @@ const NotificationsList = ({
                         variant="link"
                         size="sm"
                         className="px-0 h-7 mt-1"
-                        onClick={() => onMarkAsRead(notification.id)}
+                        onClick={(e) => handleMarkAsRead(notification.id, e)}
                       >
                         <CheckCircle className="h-3.5 w-3.5 mr-1" />
                         Mark as read

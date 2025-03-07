@@ -6,12 +6,13 @@ import { Product } from "@/utils/mockData";
 import StatusIndicator from "@/components/StatusIndicator";
 import { formatDistanceToNow } from "date-fns";
 import { AlertTriangle, Clock, Activity } from "lucide-react";
+import { toast } from "sonner";
 
 export interface ProductCardProps {
   product: Product;
   compact?: boolean;
   className?: string;
-  onClick?: () => void; // Added onClick prop
+  onClick?: () => void;
 }
 
 export const ProductCard = ({ product, compact = false, className, onClick }: ProductCardProps) => {
@@ -19,8 +20,29 @@ export const ProductCard = ({ product, compact = false, className, onClick }: Pr
     ? formatDistanceToNow(product.nextMaintenanceDate, { addSuffix: true })
     : "Unknown";
   
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick();
+    }
+    
+    // Show toast based on product status
+    if (product.status === "Critical") {
+      toast.warning(`${product.name} requires immediate attention!`, {
+        description: "This product has critical issues that need to be addressed."
+      });
+    } else if (product.status === "Warning") {
+      toast.info(`${product.name} may need maintenance soon`, {
+        description: "This product has warnings that should be monitored."
+      });
+    } else {
+      toast.success(`Viewing ${product.name} details`, {
+        description: `${product.manufacturer} ${product.model}`
+      });
+    }
+  };
+  
   return (
-    <Link to={`/product/${product.id}`} onClick={onClick}>
+    <Link to={`/product/${product.id}`} onClick={handleClick}>
       <Card className={cn(
         "transition-all duration-300 h-full hover:shadow-md",
         product.status === "Critical" && "border-destructive/40",
