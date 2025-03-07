@@ -2,7 +2,7 @@
 import { Product, MaintenanceRecommendation, mockProducts, maintenanceRecommendations } from './mockData';
 
 // API base URL - change to your Python backend URL
-const API_BASE_URL = 'http://localhost:5000/api';
+export const API_BASE_URL = 'http://localhost:5000/api';
 
 // Flag to switch between mock data and real API
 const USE_MOCK_DATA = true; // Set to false to use the Python backend

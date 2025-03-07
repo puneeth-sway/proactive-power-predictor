@@ -1,5 +1,5 @@
 
-import { API_URL } from "@/utils/api";
+import { API_BASE_URL } from "@/utils/api";
 
 interface Notification {
   id: string;
@@ -15,8 +15,8 @@ interface Notification {
 
 export const getNotifications = async (recipientId?: string): Promise<Notification[]> => {
   const url = recipientId 
-    ? `${API_URL}/notifications?recipientId=${recipientId}` 
-    : `${API_URL}/notifications`;
+    ? `${API_BASE_URL}/notifications?recipientId=${recipientId}` 
+    : `${API_BASE_URL}/notifications`;
   
   const response = await fetch(url);
   
@@ -33,7 +33,7 @@ export const getNotifications = async (recipientId?: string): Promise<Notificati
 };
 
 export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
-  const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
+  const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
@@ -46,7 +46,7 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
 };
 
 export const dismissNotification = async (notificationId: string): Promise<void> => {
-  const response = await fetch(`${API_URL}/notifications/${notificationId}`, {
+  const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
     method: 'DELETE'
   });
   
