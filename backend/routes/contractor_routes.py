@@ -1,4 +1,3 @@
-
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 import uuid
