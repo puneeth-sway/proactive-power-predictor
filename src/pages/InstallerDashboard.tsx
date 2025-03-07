@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,16 +8,19 @@ import { useNavigate } from "react-router-dom";
 import { mockProducts, mockNotifications } from "@/utils/mockData";
 import NotificationsList from "@/components/NotificationsList";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getNotifications, markNotificationAsRead, dismissNotification } from "@/services/notificationService";
 
 const InstallerDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("upcoming");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Filter products assigned to this installer (in a real app, this would use the logged-in user's ID)
+  const installerId = "installer-456";
+  
   const installerProducts = mockProducts.slice(0, 6); // Simulating products assigned to this installer
   
-  // Get installer-specific notifications
   const [installerNotifications, setInstallerNotifications] = useState(
     mockNotifications
       .filter(n => n.type.includes("MAINTENANCE"))
@@ -33,23 +37,54 @@ const InstallerDashboard = () => {
       }))
   );
 
-  const handleMarkAsRead = (id: string) => {
-    setInstallerNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === id 
+            ? { ...notification, read: true } 
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      toast.error("Failed to mark notification as read");
+    }
   };
 
-  const handleDismissNotification = (id: string) => {
-    setInstallerNotifications(prev => prev.filter(notification => notification.id !== id));
+  const handleDismiss = async (id: string) => {
+    try {
+      await dismissNotification(id);
+      setNotifications(prev => 
+        prev.filter(notification => notification.id !== id)
+      );
+    } catch (error) {
+      console.error("Error dismissing notification:", error);
+      toast.error("Failed to dismiss notification");
+    }
   };
-  
-  // Organize installations by time
+
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const data = await getNotifications(installerId);
+      setNotifications(data);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
   const upcomingInstallations = installerProducts.filter(p => new Date(p.installDate) > new Date()).slice(0, 3);
   const recentInstallations = installerProducts.filter(p => new Date(p.installDate) <= new Date()).slice(0, 3);
   
-  // Filter maintenance tasks
   const maintenanceTasks = installerProducts
     .filter(p => p.hoursUntilMaintenance !== undefined && p.hoursUntilMaintenance < 200)
     .map(product => ({
@@ -315,10 +350,11 @@ const InstallerDashboard = () => {
           </div>
 
           <div className="md:col-span-1">
-            <NotificationsList 
-              notifications={installerNotifications}
+            <NotificationsList
+              notifications={notifications}
               onMarkAsRead={handleMarkAsRead}
-              onDismiss={handleDismissNotification}
+              onDismiss={handleDismiss}
+              loading={loading}
             />
           </div>
         </div>

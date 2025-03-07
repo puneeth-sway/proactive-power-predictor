@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,7 @@ import { NotificationType } from "@/utils/mockData";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface Notification {
   id: string;
@@ -28,6 +28,7 @@ interface NotificationsListProps {
   onDismiss?: (id: string) => void;
   maxHeight?: string;
   showEmpty?: boolean;
+  loading?: boolean;
 }
 
 const NotificationsList = ({
@@ -36,13 +37,13 @@ const NotificationsList = ({
   onDismiss,
   maxHeight = "350px",
   showEmpty = true,
+  loading = false,
 }: NotificationsListProps) => {
   const handleMarkAsRead = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (onMarkAsRead) {
       onMarkAsRead(id);
-      toast.success("Notification marked as read");
     }
   };
 
@@ -51,31 +52,8 @@ const NotificationsList = ({
     e.stopPropagation();
     if (onDismiss) {
       onDismiss(id);
-      toast.success("Notification dismissed");
     }
   };
-
-  if (notifications.length === 0 && showEmpty) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <Bell className="h-10 w-10 text-muted-foreground mb-3" />
-            <h3 className="font-medium">No notifications</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              You're all caught up! There are no notifications at this time.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -102,6 +80,55 @@ const NotificationsList = ({
         return "bg-muted border-muted-foreground/20";
     }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-2">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (notifications.length === 0 && showEmpty) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <Bell className="h-10 w-10 text-muted-foreground mb-3" />
+            <h3 className="font-medium">No notifications</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              You're all caught up! There are no notifications at this time.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

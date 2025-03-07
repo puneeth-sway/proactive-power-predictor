@@ -1,7 +1,6 @@
-
 import { API_BASE_URL } from "@/utils/api";
 
-interface Notification {
+export interface Notification {
   id: string;
   type: string;
   title: string;
@@ -11,6 +10,16 @@ interface Notification {
   read: boolean;
   scheduledFor?: Date;
   recipients: string[];
+}
+
+interface SendNotificationParams {
+  contractorId: string;
+  type: string;
+  title: string;
+  message: string;
+  recipientType: "homeowners" | "installers" | "both";
+  productId?: string;
+  scheduledFor?: string;
 }
 
 export const getNotifications = async (recipientId?: string): Promise<Notification[]> => {
@@ -52,5 +61,22 @@ export const dismissNotification = async (notificationId: string): Promise<void>
   
   if (!response.ok) {
     throw new Error('Failed to dismiss notification');
+  }
+};
+
+export const sendNotificationToRecipients = async (params: SendNotificationParams): Promise<void> => {
+  const { contractorId, ...notificationData } = params;
+  
+  const response = await fetch(`${API_BASE_URL}/contractors/${contractorId}/send-notification`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(notificationData)
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to send notification');
   }
 };

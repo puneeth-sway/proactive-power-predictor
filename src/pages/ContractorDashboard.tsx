@@ -1,27 +1,79 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { mockProducts, mockNotifications } from "@/utils/mockData";
-import { useState } from "react";
-import { ArrowLeft, Users, Home, Wrench, Bell, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Users, Home, Wrench, Bell } from "lucide-react";
 import NotificationsList from "@/components/NotificationsList";
 import UserRoleBadge from "@/components/UserRoleBadge";
+import SendNotificationDialog from "@/components/SendNotificationDialog";
+import { getNotifications, markNotificationAsRead, dismissNotification } from "@/services/notificationService";
+import { toast } from "sonner";
 
 const ContractorDashboard = () => {
   const navigate = useNavigate();
-  const [activeNotifications, setActiveNotifications] = useState(
-    mockNotifications.slice(0, 5).map(notification => ({
-      ...notification,
-      id: notification.id || `fallback-${Math.random().toString(36).substring(2, 9)}`,
-      type: notification.type || "General",
-      title: notification.title || "Notification",
-      message: notification.message || "No details available",
-      createdAt: notification.createdAt || new Date(),
-      read: notification.read || false,
-      recipients: notification.recipients || []
-    }))
-  );
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Mock contractor ID - in a real app, this would come from authentication
+  const contractorId = "contractor-123";
+  
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const data = await getNotifications();
+      setNotifications(data);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      // Fallback to mock data if API fails
+      setNotifications(mockNotifications.slice(0, 5).map(notification => ({
+        ...notification,
+        id: notification.id || `fallback-${Math.random().toString(36).substring(2, 9)}`,
+        type: notification.type || "General",
+        title: notification.title || "Notification",
+        message: notification.message || "No details available",
+        createdAt: new Date(),
+        read: notification.read || false,
+        recipients: notification.recipients || []
+      })));
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+  
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === id 
+            ? { ...notification, read: true } 
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      toast.error("Failed to mark notification as read");
+    }
+  };
+  
+  const handleDismiss = async (id: string) => {
+    try {
+      await dismissNotification(id);
+      setNotifications(prev => 
+        prev.filter(notification => notification.id !== id)
+      );
+    } catch (error) {
+      console.error("Error dismissing notification:", error);
+      toast.error("Failed to dismiss notification");
+    }
+  };
   
   return (
     <div className="min-h-screen bg-background">
@@ -103,10 +155,10 @@ const ContractorDashboard = () => {
                   <TabsTrigger value="schedule">Schedule</TabsTrigger>
                 </TabsList>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    <Send className="size-4 mr-2" />
-                    Send Notifications
-                  </Button>
+                  <SendNotificationDialog 
+                    contractorId={contractorId} 
+                    onSuccess={fetchNotifications}
+                  />
                 </div>
               </div>
 
@@ -239,18 +291,10 @@ const ContractorDashboard = () => {
 
           <div className="md:col-span-1">
             <NotificationsList 
-              notifications={mockNotifications.slice(0, 5).map(notification => ({
-                ...notification,
-                id: notification.id || `fallback-${Math.random().toString(36).substring(2, 9)}`,
-                type: notification.type || "General",
-                title: notification.title || "Notification",
-                message: notification.message || "No details available",
-                createdAt: new Date(),
-                read: notification.read || false,
-                recipients: notification.recipients || []
-              }))}
-              onMarkAsRead={(id) => console.log("Mark as read:", id)}
-              onDismiss={(id) => console.log("Dismiss:", id)}
+              notifications={notifications}
+              onMarkAsRead={handleMarkAsRead}
+              onDismiss={handleDismiss}
+              loading={loading}
             />
           </div>
         </div>
